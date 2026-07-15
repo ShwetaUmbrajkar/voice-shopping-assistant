@@ -3,7 +3,8 @@
 A voice-based shopping list manager with smart suggestions, built as a client-only
 React app so it's free to run, free to host, and requires no API keys.
 
-**Live demo:** _add your deployed URL here after step 3 below_
+**Live demo:** https://voice-shopping-assistant-omega.vercel.app
+
 **Repo:** https://github.com/ShwetaUmbrajkar/voice-shopping-assistant.git
 
 ---
