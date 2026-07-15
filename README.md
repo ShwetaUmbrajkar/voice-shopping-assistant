@@ -156,7 +156,7 @@ git push -u origin main
 
 ---
 
-## ✍️ Approach write-up (submit this as your ~200-word summary)
+## ✍️ Approach 
 
 > I built the assistant as a single-page React (Vite) app so voice input,
 > NLP, list management, and hosting could all be free-tier and dependency-light,
@@ -181,17 +181,3 @@ git push -u origin main
 
 ---
 
-## 💡 Extras beyond the brief (nice to mention in your submission email)
-
-- **Text-command fallback** — types the exact same NLP pipeline as voice, useful for accessibility and for reviewers testing without a mic.
-- **Quantity stepper controls** in the list UI (not just voice).
-- **Toast-based substitute suggestions** shown automatically when a substitutable item (milk, bread, sugar, etc.) is added.
-- **Multilingual trigger dictionary**, not just multilingual transcription — Spanish/Hindi phrases are recognized by the NLP layer itself.
-- **LocalStorage-based purchase history** that grows smarter the more you use the app.
-
-## 🔭 Ideas if you get extra time later
-- Swap the rule-based NLP for a small LLM call (e.g., free-tier Groq/Gemini) for more flexible phrasing.
-- Real product data via a free grocery API (Open Food Facts) instead of the static catalog.
-- PWA install support for a true "mobile app" feel.
-- Voice output (SpeechSynthesis API) for confirmations — full hands-free loop.
-- User accounts + cloud sync (Firebase Auth + Firestore) instead of localStorage.
