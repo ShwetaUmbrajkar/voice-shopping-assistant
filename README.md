@@ -1,14 +1,14 @@
-# 🛒 Voice Command Shopping Assistant
+# Voice Command Shopping Assistant
 
 A voice-based shopping list manager with smart suggestions, built as a client-only
 React app so it's free to run, free to host, and requires no API keys.
 
 **Live demo:** _add your deployed URL here after step 3 below_
-**Repo:** _add your GitHub URL here_
+**Repo:** https://github.com/ShwetaUmbrajkar/voice-shopping-assistant.git
 
 ---
 
-## ✅ Features implemented (mapped to the brief)
+## Features implemented
 
 | # | Requirement | How it's implemented |
 |---|---|---|
@@ -34,7 +34,7 @@ app is always usable, and a "Processing…" mic state while a command is parsed.
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 voice-shopping-assistant/
@@ -73,9 +73,7 @@ decision to fit the 8-hour budget without sacrificing any required feature.
 
 ---
 
-## 🚀 Run locally (using Anaconda Prompt / VS Code terminal)
-
-You already have Anaconda + VS Code, so Node.js may not be installed yet. Easiest path:
+## Run locally (using Anaconda Prompt / VS Code terminal)
 
 ```bash
 # 1. Create an isolated env with Node (via conda-forge) — run in Anaconda Prompt
@@ -109,54 +107,7 @@ the exact same NLP pipeline.
 
 ---
 
-## ☁️ Deploy (pick one — all free)
-
-### Option A: Vercel (recommended, fastest)
-```bash
-npm install -g vercel
-vercel login
-vercel --prod
-```
-Follow the prompts (accept defaults — Vercel auto-detects Vite). You'll get a
-live `https://your-app.vercel.app` URL.
-
-### Option B: Netlify
-```bash
-npm run build
-npm install -g netlify-cli
-netlify deploy --prod --dir=dist
-```
-
-### Option C: Firebase Hosting
-```bash
-npm run build
-npm install -g firebase-tools
-firebase login
-firebase init hosting   # choose "dist" as the public directory, configure as a single-page app: Yes
-firebase deploy
-```
-
-> ⚠️ Important: the Web Speech API requires **HTTPS** (or `localhost`). All
-> three options above serve over HTTPS by default, so voice input will work
-> once deployed.
-
----
-
-## 📦 Push to GitHub
-
-```bash
-cd path\to\voice-shopping-assistant
-git init
-git add .
-git commit -m "Voice Command Shopping Assistant - initial submission"
-git branch -M main
-git remote add origin https://github.com/<your-username>/voice-shopping-assistant.git
-git push -u origin main
-```
-
----
-
-## ✍️ Approach 
+## Approach 
 
 > I built the assistant as a single-page React (Vite) app so voice input,
 > NLP, list management, and hosting could all be free-tier and dependency-light,
@@ -176,8 +127,5 @@ git push -u origin main
 > with real-time toast feedback for every recognized command, loading/listening
 > states on the mic button, and a text-input fallback for accessibility and
 > for environments without microphone access.
-
-(Trim/adjust freely — this is written to be under 200 words as required.)
-
 ---
 
