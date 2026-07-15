@@ -5,7 +5,7 @@ React app so it's free to run, free to host, and requires no API keys.
 
 **Live demo:** https://voice-shopping-assistant-omega.vercel.app
 
-**Repo:** https://github.com/ShwetaUmbrajkar/voice-shopping-assistant.git
+**Git Repo:** https://github.com/ShwetaUmbrajkar/voice-shopping-assistant
 
 ---
 
@@ -75,6 +75,16 @@ voice-shopping-assistant/
 Why no backend? Everything (list, history, catalog) runs client-side with localStorage. This meets the "reliable hosting platform" requirement via a static host (Vercel) while keeping the whole build free-tier and removable of any server maintenance — a deliberate scope decision to fit the 8-hour budget without sacrificing any required feature.
 
 ---
+### Added in round 2
+ 
+| Feature | How it's implemented |
+|---|---|
+| **Voice output (hands-free loop)** | `useSpeechSynthesis` hook speaks confirmations ("Added milk to your list") via the browser's `SpeechSynthesisUtterance`. Toggle with the 🔊/🔇 icon in the header. |
+| **Live product data** | Voice/text search now also queries the free [Open Food Facts](https://world.openfoodfacts.org) API in the background (`src/utils/productApi.js`) and merges real products (tagged **LIVE**) into results. Local catalog results (with prices) always show first; if the live API is unreachable it fails silently and local search still works. |
+| **PWA installable** | `public/manifest.json` + `public/sw.js` (service worker) let users "Add to Home Screen" on mobile for an app-like, voice-first experience. Registered in `src/main.jsx`. |
+| **Dark mode** | 🌙/☀️ toggle in the header, CSS-variable based, preference saved to `localStorage`. |
+| **Export list** | Downloads the current list as a `.txt` file. |
+| **Clear list** | One-tap clear with a confirmation prompt. |
 
 ## Run locally (using Anaconda Prompt / VS Code terminal)
 
@@ -91,6 +101,7 @@ npm install
 
 # 4. Run the dev server
 npm run dev
+```
 Open the printed URL (usually http://localhost:5173) in Chrome or Edge (Web Speech API support is best there; Firefox/Safari support is partial). Click the mic button, allow microphone access, and try:
 
 "Add milk"
