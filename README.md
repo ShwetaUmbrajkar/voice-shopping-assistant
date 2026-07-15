@@ -43,15 +43,22 @@ voice-shopping-assistant/
 ├── package.json
 ├── vite.config.js
 ├── README.md
+├── public/
+│   ├── manifest.json         # PWA manifest (installable app)
+│   ├── sw.js                 # Service worker (offline caching)
+│   ├── icon-192.png
+│   └── icon-512.png
 └── src/
-    ├── main.jsx                 # React entry point
+    ├── main.jsx                 # React entry point + service worker registration
     ├── App.jsx                  # Main app logic & state
-    ├── App.css / index.css      # Styling
+    ├── App.css / index.css      # Styling (incl. dark mode CSS variables)
     ├── hooks/
-    │   └── useSpeechRecognition.js   # Web Speech API wrapper
+    │   ├── useSpeechRecognition.js   # Web Speech API wrapper (voice IN)
+    │   └── useSpeechSynthesis.js     # SpeechSynthesis wrapper (voice OUT)
     ├── utils/
     │   ├── nlp.js               # Intent parser (add/remove/search + qty/price)
-    │   └── storage.js           # localStorage persistence + purchase history
+    │   ├── storage.js           # localStorage persistence + purchase history
+    │   └── productApi.js        # Live Open Food Facts search client
     ├── data/
     │   ├── catalog.json         # Sample product catalog (search/price filter)
     │   ├── categoryMap.js       # Keyword → category rules
@@ -61,16 +68,11 @@ voice-shopping-assistant/
         ├── MicButton.jsx
         ├── ShoppingList.jsx
         ├── Suggestions.jsx
-        ├── SearchResults.jsx
+        ├── SearchResults.jsx     # Now shows LIVE-tagged real product results
         ├── LanguageSelector.jsx
         └── Toast.jsx
 ```
-
-**Why no backend?** Everything (list, history, catalog) runs client-side with
-`localStorage`. This meets the "reliable hosting platform" requirement via a
-static host (Vercel/Netlify/Firebase Hosting) while keeping the whole build
-free-tier and removable of any server maintenance — a deliberate scope
-decision to fit the 8-hour budget without sacrificing any required feature.
+Why no backend? Everything (list, history, catalog) runs client-side with localStorage. This meets the "reliable hosting platform" requirement via a static host (Vercel) while keeping the whole build free-tier and removable of any server maintenance — a deliberate scope decision to fit the 8-hour budget without sacrificing any required feature.
 
 ---
 
@@ -89,22 +91,15 @@ npm install
 
 # 4. Run the dev server
 npm run dev
-```
+Open the printed URL (usually http://localhost:5173) in Chrome or Edge (Web Speech API support is best there; Firefox/Safari support is partial). Click the mic button, allow microphone access, and try:
 
-Open the printed URL (usually `http://localhost:5173`) in **Chrome or Edge**
-(Web Speech API support is best there; Firefox/Safari support is partial).
-Click the mic button, allow microphone access, and try:
-
-- "Add milk"
-- "I need 2 bottles of water"
-- "I want to buy bananas"
-- "Remove milk from my list"
-- "Find me organic apples"
-- "Find toothpaste under $5"
-
-If mic access isn't available (e.g., no microphone, or testing on a
-restricted network), use the text box under the mic button — it runs through
-the exact same NLP pipeline.
+"Add milk"
+"I need 2 bottles of water"
+"I want to buy bananas"
+"Remove milk from my list"
+"Find me organic apples"
+"Find toothpaste under $5"
+If mic access isn't available (e.g., no microphone, or testing on a restricted network), use the text box under the mic button — it runs through the exact same NLP pipeline.
 
 ---
 

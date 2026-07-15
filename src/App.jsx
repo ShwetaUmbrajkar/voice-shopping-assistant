@@ -6,11 +6,13 @@ import SearchResults from './components/SearchResults.jsx'
 import LanguageSelector from './components/LanguageSelector.jsx'
 import Toast from './components/Toast.jsx'
 import { useSpeechRecognition } from './hooks/useSpeechRecognition.js'
+import { useSpeechSynthesis } from './hooks/useSpeechSynthesis.js'
 import { parseCommand } from './utils/nlp.js'
 import { categorize } from './data/categoryMap.js'
 import { getSubstitutes } from './data/substitutes.js'
 import { getSeasonalPicks } from './data/seasonal.js'
 import { loadList, saveList, loadHistory, bumpHistory } from './utils/storage.js'
+import { searchLiveProducts } from './utils/productApi.js'
 import catalog from './data/catalog.json'
 import './App.css'
 
@@ -22,13 +24,29 @@ export default function App() {
   const [toasts, setToasts] = useState([])
   const [isProcessing, setIsProcessing] = useState(false)
   const [search, setSearch] = useState(null) // { query, results }
+  const [isLoadingLive, setIsLoadingLive] = useState(false)
   const [textInput, setTextInput] = useState('')
+  const [voiceOutputOn, setVoiceOutputOn] = useState(() => localStorage.getItem('vsa_voice_out') !== 'off')
+  const [darkMode, setDarkMode] = useState(() => localStorage.getItem('vsa_dark') === 'on')
 
-  const pushToast = useCallback((text, type = 'info') => {
+  const { speak, setEnabled: setSpeechEnabled } = useSpeechSynthesis(lang)
+
+  useEffect(() => {
+    setSpeechEnabled(voiceOutputOn)
+    localStorage.setItem('vsa_voice_out', voiceOutputOn ? 'on' : 'off')
+  }, [voiceOutputOn, setSpeechEnabled])
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', darkMode ? 'dark' : 'light')
+    localStorage.setItem('vsa_dark', darkMode ? 'on' : 'off')
+  }, [darkMode])
+
+  const pushToast = useCallback((text, type = 'info', { announce } = {}) => {
     const id = ++toastId
     setToasts((t) => [...t, { id, text, type }])
     setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3500)
-  }, [])
+    if (announce) speak(announce)
+  }, [speak])
 
   useEffect(() => {
     saveList(items)
@@ -44,7 +62,9 @@ export default function App() {
       return [...prev, { id: Date.now() + Math.random(), name, quantity, category }]
     })
     bumpHistory(name)
-    pushToast(`Added ${quantity > 1 ? quantity + ' × ' : ''}${name}`, 'success')
+    pushToast(`Added ${quantity > 1 ? quantity + ' × ' : ''}${name}`, 'success', {
+      announce: `Added ${name} to your list`,
+    })
 
     const subs = getSubstitutes(name)
     if (subs.length) {
@@ -56,10 +76,10 @@ export default function App() {
     setItems((prev) => {
       const match = prev.find((i) => i.name.toLowerCase().includes(name.toLowerCase()))
       if (!match) {
-        pushToast(`Couldn't find "${name}" in your list`, 'error')
+        pushToast(`Couldn't find "${name}" in your list`, 'error', { announce: `I couldn't find ${name}` })
         return prev
       }
-      pushToast(`Removed ${match.name}`, 'success')
+      pushToast(`Removed ${match.name}`, 'success', { announce: `Removed ${match.name}` })
       return prev.filter((i) => i.id !== match.id)
     })
   }, [pushToast])
@@ -76,12 +96,44 @@ export default function App() {
     )
   }, [])
 
-  const runSearch = useCallback((query, priceMax, qualifier) => {
+  const clearList = useCallback(() => {
+    if (items.length === 0) return
+    if (window.confirm('Clear your entire shopping list?')) {
+      setItems([])
+      pushToast('List cleared', 'info')
+    }
+  }, [items.length, pushToast])
+
+  const exportList = useCallback(() => {
+    if (items.length === 0) {
+      pushToast('Nothing to export yet', 'error')
+      return
+    }
+    const lines = items.map((i) => `- ${i.name} x${i.quantity} (${i.category})`)
+    const blob = new Blob([`Shopping List\n\n${lines.join('\n')}`], { type: 'text/plain' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'shopping-list.txt'
+    a.click()
+    URL.revokeObjectURL(url)
+    pushToast('List exported', 'success')
+  }, [items, pushToast])
+
+  const runSearch = useCallback(async (query, priceMax, qualifier) => {
     const q = query.toLowerCase()
-    let results = catalog.filter((p) => p.name.toLowerCase().includes(q))
-    if (priceMax != null) results = results.filter((p) => p.price <= priceMax)
-    if (qualifier) results = results.filter((p) => p.name.toLowerCase().includes(qualifier.split(' ')[0]))
-    setSearch({ query, results })
+    let localResults = catalog.filter((p) => p.name.toLowerCase().includes(q))
+    if (priceMax != null) localResults = localResults.filter((p) => p.price <= priceMax)
+    if (qualifier) localResults = localResults.filter((p) => p.name.toLowerCase().includes(qualifier.split(' ')[0]))
+
+    setSearch({ query, results: localResults })
+    setIsLoadingLive(true)
+
+    // Enrich with real-world product data from the free Open Food Facts API.
+    // Runs after local results are already shown, so search never feels slow.
+    const liveResults = await searchLiveProducts(query)
+    setIsLoadingLive(false)
+    setSearch((prev) => (prev && prev.query === query ? { query, results: [...prev.results, ...liveResults] } : prev))
   }, [])
 
   const handleTranscript = useCallback((transcript) => {
@@ -98,7 +150,9 @@ export default function App() {
       } else if (cmd.intent === 'search' && cmd.item) {
         runSearch(cmd.item, cmd.priceMax, cmd.qualifier)
       } else {
-        pushToast(`Sorry, I didn't understand: "${transcript}"`, 'error')
+        pushToast(`Sorry, I didn't understand: "${transcript}"`, 'error', {
+          announce: "Sorry, I didn't catch that",
+        })
       }
       setIsProcessing(false)
     }, 300) // small delay so the "processing" state is visible (UX feedback)
@@ -137,7 +191,23 @@ export default function App() {
     <div className="app-shell">
       <header className="app-header">
         <h1>🛒 Voice Shopping Assistant</h1>
-        <LanguageSelector lang={lang} onChange={setLang} />
+        <div className="header-controls">
+          <LanguageSelector lang={lang} onChange={setLang} />
+          <button
+            className="icon-toggle"
+            title={voiceOutputOn ? 'Voice replies on' : 'Voice replies off'}
+            onClick={() => setVoiceOutputOn((v) => !v)}
+          >
+            {voiceOutputOn ? '🔊' : '🔇'}
+          </button>
+          <button
+            className="icon-toggle"
+            title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            onClick={() => setDarkMode((d) => !d)}
+          >
+            {darkMode ? '☀️' : '🌙'}
+          </button>
+        </div>
       </header>
 
       <main className="app-main">
@@ -173,7 +243,13 @@ export default function App() {
         />
 
         <section className="list-section">
-          <h2>Your Shopping List ({items.reduce((s, i) => s + i.quantity, 0)} items)</h2>
+          <div className="list-header-row">
+            <h2>Your Shopping List ({items.reduce((s, i) => s + i.quantity, 0)} items)</h2>
+            <div className="list-actions">
+              <button className="text-btn" onClick={exportList}>Export</button>
+              <button className="text-btn danger" onClick={clearList}>Clear</button>
+            </div>
+          </div>
           <ShoppingList items={items} onRemove={removeItemById} onQtyChange={changeQty} />
         </section>
       </main>
@@ -182,6 +258,7 @@ export default function App() {
         <SearchResults
           query={search.query}
           results={search.results}
+          isLoadingLive={isLoadingLive}
           onAdd={(p) => {
             addItem(p.name, 1)
             setSearch(null)
